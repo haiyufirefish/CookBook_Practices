@@ -13,7 +13,7 @@
 #define Nine_3 0
 #define Nine_4 0
 #define Nine_5 0
-#define Nine_6 1
+#define Nine_6 0
 #define Nine_7 0
 #define Nine_8 0
 #define Nine_9 1
@@ -228,9 +228,91 @@ public:
 }
 ;
 /**************************************9.7******************************************************************/
-/**************************************9.8******************************************************************/
-/**************************************9.9******************************************************************/
+#include<atomic>
+std::atomic<bool>ready{};
+std::atomic<uint64_t>g_count{};
+std::atomic_flag winner{};
 
+constexpr int max_count{ 1000 * 1000 };
+constexpr int max_threads{ 100 };
+
+struct Trivial
+{
+	int a;
+	int b;
+};
+std::atomic<Trivial>trivial;
+
+void countem(int id)
+{
+	while (!ready)
+		std::this_thread::yield();
+	for (int i = 0; i < max_count; ++i)
+		++g_count;
+	if (!winner.test_and_set())
+		std::cout << std::format("thread {:02} won!\n", id);
+}
+
+std::string make_commas(const uint64_t& num)
+{
+	std::string s{ std::to_string(num) };
+	for (long l = s.length() - 3; l > 0; l -= 3)
+	{	
+		s.insert(l,",");
+	}
+	return s;
+}
+/**************************************9.8******************************************************************/
+constexpr size_t max_threads_{ 25 };
+std::once_flag init_flag;
+
+void do_init(size_t id)
+{
+	print("do init ({}): ", id);
+}
+
+void do_print(size_t id)
+{
+	std::call_once(init_flag, do_init, id);
+	print("{} ", id);
+}
+/**************************************9.9******************************************************************/
+#include<deque>
+using namespace std::chrono_literals;
+
+constexpr size_t num_items{ 10 };
+constexpr auto delay_time{ 200ms };
+std::deque<size_t>q{};
+std::mutex mtx{};
+std::condition_variable cond{};
+bool finished{false};
+
+void producer()
+{
+	for (size_t i{}; i < num_items; ++i)
+	{
+		std::this_thread::sleep_for(delay_time); // attention
+		std::lock_guard lock{ mtx };
+		std::cout << "push: " << i <<" into queue" << std::endl;
+		q.push_back(i);
+		cond.notify_all();
+	}
+
+	std::lock_guard lock{ mtx };
+	finished = true;
+	cond.notify_all();
+}
+
+void consumer()
+{
+	while (!finished)
+	{
+		std::unique_lock lck{ mtx };
+		cond.wait(lck, [] {return !q.empty() || finished; });
+		std::cout << std::format("Got {} from the queue \n", q.front());
+		q.pop_front();
+	}
+}
 
 int main()
 {
@@ -376,11 +458,38 @@ int main()
 	auto p5 = std::async([&] {cat1->print(); });
 	auto p6 = std::async([&] {rabbit1->print(); });
 #endif
-#if Nine_2
+#if Nine_7
+	//using atomic to share label and value
+	std::vector<std::thread>swarm;
+	std::cout << std::format("spawn {} threads\n", max_threads);
+	for (int i{}; i < max_threads; ++i)
+		swarm.emplace_back(countem, i);
+
+	ready = true;
+	for (auto& t : swarm)
+		t.join();
+	std::cout << std::format("global count: {} \n", make_commas(g_count));
+
+	std::cout << std::format("is g_count lock-free? {}\n", g_count.is_lock_free());
+
 #endif
-#if Nine_2
+#if Nine_8
+	std::list<std::thread>spawn;
+	for (size_t id = 0; id < max_threads_; id++)
+	{
+		spawn.emplace_back(do_print, id);
+	}
+	for (auto& t : spawn)
+		t.join();
+	std::cout << '\n';
 #endif
-#if Nine_2
+#if Nine_9
+	std::thread t1{ producer };
+	std::thread t2{ consumer };
+
+	t1.join();
+	t2.join();
+	print("finished!");
 #endif
 }
 
