@@ -53,7 +53,8 @@ constexpr auto f3()
 template<class T,class U>
 constexpr bool cmp_less(T t, U u) noexcept
 {
-    using UT = std::make_unsigned_t<T>;
+   // If T is signed or unsigned char, short, int, long, long long; the unsigned type from this list corresponding to T is provided.
+    using UT = std::make_unsigned_t<T>; 
     using UU = std::make_unsigned_t<U>;
     // is_signed_v == is_signed<>::value
     //if constexpr (std::is_signed<T>::value == std::is_signed<U>::value)
@@ -81,6 +82,7 @@ struct X
     double b{};
     char c{};
     // it doesnt't need overload
+    // The friend declaration and = default specifier ensure that the operator has access to private members and that the default comparison behavior is used.
     friend auto operator<=>(const X&, const X&) = default;
 };
 
@@ -161,16 +163,16 @@ void print3(stdr::range auto v)
 
 int main()
 {   
-    // 1.2
+    // 1.2 formatter
     //Frac f{ 1,10 };
     //print("{}", f);
 
-    // 1.3
+    // 1.3 using constexpr vector and string
     constexpr auto n1 = f3().size(); // ok
     //constexpr auto n2 = f3();  // not ok, as f3() is not a const value
     //constexpr auto n3 = f2();  // not ok, as f2() is not a const value
 
-    // 1.4
+    // 1.4 std::boolalpha<< change to bool, ::cmp_less: to solve unsigned and signed compare bug
     //std::cout << std::boolalpha << (5u < -1) << '\n'; // true
     //std::cout << std::boolalpha << ::cmp_less(5u, -1) << '\n'; // false
     //std::cout << std::boolalpha << (5u < 2u) << '\n'; // false
@@ -190,11 +192,11 @@ int main()
     //std::cout << std::boolalpha << (y < y2) << '\n';//true
     //std::cout << std::boolalpha << (y != y2) << '\n';//true
 
-    // 1.6
+    // 1.6 __ is the begin of macro
     //std::cout << __cpp_lib_three_way_comparison << '\n'; // 201907, from 2019.07 is accepted
     //std::cout << __cpp_lib_format << '\n';// 202207, from 2022.07 is accepted
 
-    //1.7
+    //1.7 concept and constraint
     //f6(1);
     //f6('*');
     ////f6(1.2); // invalid
@@ -208,14 +210,14 @@ int main()
     //f7(1u);
     ////f7(1l);//invalid
 
-    // 1.8
+    // 1.8 moduls
     // import test1; define test1 is not global invalid
    // std::cout << mylib::add_(1, 2) << '\n';
    //// std::cout << mylib::PI << '\n'; invalid
    // std::cout << PI1 << '\n'; // ok
    // tt();
 
-    // 1.9
+    // 1.9 view: read only
     //std::vector nums{ 1,2,3,4,5,6,7,8,9,10 };
     //auto ret = nums | stdv::take(5) | stdv::reverse;
     //print3(ret); // 5 4 3 2 1
