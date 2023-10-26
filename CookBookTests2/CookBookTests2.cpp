@@ -6,6 +6,7 @@
 #include <span>
 #include <string_view>
 
+
 template <typename... Args>
 void print1(const std::string_view fmt_str, Args&&... args)
 {
@@ -24,7 +25,7 @@ void psspan(std::span<T> s)
     print1("{}", i);
   endl(std::cout);
 }
-
+// https://zh.cppreference.com/w/cpp/container/span document of span
 /**************************************2.3******************************************************************/
 #include<map>
 #include<tuple>
@@ -35,7 +36,7 @@ struct X
   double b;
   std::string str;
 };
-
+// tuple
 auto func3()->std::tuple<int, int>
 {
   return { 1,2 };
@@ -138,6 +139,7 @@ int main()
   //a = 10;
   //print1("{}\n", array[0]);
 
+  //structed bind
   //std::tuple<int, double, std::string>tu{ 10,3.14,"fff" };
   //auto [t1, t2, t3] = tu;
   //print1("{} {} {}\n", t1, t2, t3);
@@ -154,6 +156,7 @@ int main()
   // 2.4
   //for (int i = 0; i < 10; ++i)
   //{
+  // jthread join in destructor
   //  std::jthread th1{ func4,i*2 };
   //  std::jthread th2{ func4,i*3 };
   //}
